@@ -5,6 +5,7 @@ on:
       - main
 
 jobs:
+
   deploy:
     runs-on: ubuntu-latest
     steps:
@@ -22,20 +23,35 @@ jobs:
       - name: Build the project
         run: npm run build
 
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
+      - name: Upload update.sh script
+        uses: actions/upload-artifact@v3
+        with:
+          name: update-script
+          path: update.sh
 
-      - name: Accept host key
-        run: |
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+  update_ssh_linode:
+    name: Telling Backend Server to Update
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download update.sh script
+        uses: actions/download-artifact@v3
+        with:
+          name: update-script
 
-      - name: Deploy to VPS
-        env:
-          HOST: ${{ secrets.VPS_HOST }}
-          USER: ${{ secrets.VPS_USERNAME }}
-          PASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -p "$PASS" scp -r build/* $USER@$HOST:/var/www
-          sshpass -p "$PASS" ssh $USER@$HOST "
-            sudo systemctl restart nginx
-          "
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            # Copy the update script to the server
+            scp update.sh ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/root/update.sh
+
+            # Run the update script
+            ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "bash /root/update.sh"
+
+            # Clean up the temporary script file
+            ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "rm /root/update.sh"
