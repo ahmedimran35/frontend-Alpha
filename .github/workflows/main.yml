@@ -16,7 +16,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '20' # Specify the Node.js version
+        node-version: '18' # Specify the Node.js version
 
     - name: Install dependencies
       run: npm install
@@ -32,12 +32,38 @@ jobs:
         password: ${{ secrets.VPS_PASSWORD }}
         port: 22 # Specify the SSH port (default is 22)
         script: |
-          cd /root/backend
-          sudo rm -rf * # Delete all existing files
+          # Ensure Node.js and npm are available
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+          nvm use 18
+
+          # Navigate to backend folder
+          cd /path/to/your/backend/folder || exit 1
+
+          # Remove old files, but keep .git directory
+          sudo find . -mindepth 1 -not -name '.git' -not -name '.gitignore' -delete
+
+          # Initialize a new git repository if not already present
+          if [ ! -d ".git" ]; then
+            git init
+            git remote add origin https://github.com/your-username/your-repo.git
+          fi
+
+          # Pull the latest changes from the repository
           git fetch origin
           git reset --hard origin/main
+
+          # Install npm dependencies
           npm install
+
+          # Copy the .env file
           cp /root/.env.local /root/backend
+
+          # Build the project
           npm run build
+
+          # Copy the built files to /var/www
           sudo cp -r dist/* /var/www/
+
+          # Restart Nginx to apply changes
           sudo systemctl restart nginx
