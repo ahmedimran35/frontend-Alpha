@@ -1,0 +1,436 @@
+import { useRef, useState } from "react";
+import useAuth from "../../Hooks/useAuth";
+import useAxiosSecure from "../../Hooks/useAxiosSecure";
+import { errorAlert } from "../../components/Alert/errorAlert";
+
+import { FaUpload } from "react-icons/fa";
+import { MdDeleteForever } from "react-icons/md";
+import BulkUploadInputField from "../../components/InputFields/bulkUploadInputFiled/bulkUploadInputFiled";
+import BulkUploadDescriptionInputField from "../../components/InputFields/bulkUploadInputFiled/BulkUploadDescriptionInputFiled";
+import { successAlert } from "../../components/Alert/successAlert";
+import { iconRootURL } from "../../utils/Constants/decryptedApiConstants/apiURL";
+import { categoryClass } from "../../utils/Constants/AddAssetConstant/FormConstant";
+import { labelClass } from "../../utils/Constants/InputFieldConstants/InputFieldConstants";
+import ArrowIconSelect from "../../components/ArrowIconSelect/ArrowIconSelect";
+
+import Cookies from "js-cookie";
+import {
+  bulkIconEmptyInputFiledValidation,
+  bulkIconFileValidation,
+  bulkIconInputFiledValidation,
+  handleFileChange,
+} from "../../utils/Functions/BulkIconFunctions/BulkIconFuncations";
+import BulkIconTagInputFiled from "../../components/InputFields/bulkUploadInputFiled/BulkIconTagInputFiled";
+import UploadLoading from "../../components/isLoading/UploadLoading";
+import PropTypes from "prop-types";
+import { iconStyle, iconSubCategories } from "./forms.contants";
+const AddBulkIconForm = ({ files, setFiles }) => {
+  const [formData, setFormData] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
+  const { user } = useAuth();
+  const axiosSecure = useAxiosSecure();
+  const [iconLoading, setIconLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  const fileInputRef = useRef(null);
+
+  const handleTitleChange = (index, e) => {
+    const updatedFormData = [...formData];
+    updatedFormData[index].title = e.target.value.replace(/\s+/g, " ");
+
+    setFormData(updatedFormData);
+  };
+  const handleMetaTitleChange = (index, e) => {
+    const updatedFormData = [...formData];
+    updatedFormData[index].metaTitle = e.target.value.replace(/\s+/g, " ");
+    setFormData(updatedFormData);
+  };
+
+  const handleCategoryChange = (index, e) => {
+    const updatedFormData = [...formData];
+    updatedFormData[index].category = e.target.value.replace(/\s+/g, " ");
+    setFormData(updatedFormData);
+  };
+  const handleAlternativeTextChange = (index, e) => {
+    const updatedFormData = [...formData];
+    updatedFormData[index].alternativeText = e.target.value.replace(
+      /\s+/g,
+      " "
+    );
+    setFormData(updatedFormData);
+  };
+  const handleMetaDescriptionChange = (index, e) => {
+    const updatedFormData = [...formData];
+    updatedFormData[index].metaDescription = e.target.value.replace(
+      /\s+/g,
+      " "
+    );
+    setFormData(updatedFormData);
+  };
+
+  const handleTagChange = (index, e) => {
+    const updatedFormData = [...formData];
+    const tagsArray = e.target.value.split(",");
+
+    const tagsObject = {};
+    tagsArray.forEach((tag, idx) => {
+      tagsObject[`tag${idx + 1}`] = tag.trim();
+    });
+
+    updatedFormData[index].tags = tagsObject;
+    setFormData(updatedFormData);
+  };
+
+  const handleSubCategoryChange = (index, e) => {
+    const updatedFormData = [...formData];
+    updatedFormData[index].subCategory = e.target.value.replace(/\s+/g, " ");
+    setFormData(updatedFormData);
+  };
+  const handleStyleChange = (index, e) => {
+    const updatedFormData = [...formData];
+    updatedFormData[index].style = e.target.value.replace(/\s+/g, " ");
+    setFormData(updatedFormData);
+  };
+
+  const handleBoxClick = () => {
+    // Trigger the click event on the file input field
+    fileInputRef.current.click();
+  };
+
+  const deleteFiledHandler = (index) => {
+    const updatedFiles = [...files];
+    updatedFiles.splice(index, 1);
+    setFiles(updatedFiles);
+
+    const updatedFormData = [...formData];
+    updatedFormData.splice(index, 1);
+    setFormData(updatedFormData);
+  };
+
+  // uploading all icons here.
+  const handleUpload = async (e) => {
+    e.preventDefault();
+
+    setIconLoading(true);
+
+    const formDatas = new FormData();
+    formData.forEach((data) => {
+      formDatas.append("files", data.file);
+      formDatas.append("titles", data.title);
+      formDatas.append("categories", data.category);
+      formDatas.append("tags", JSON.stringify(data.tags));
+      formDatas.append("metaTitles", data.metaTitle);
+      formDatas.append("metaDescriptions", data.metaDescription);
+      formDatas.append("uploadedUserEmails", data.uploadedUserEmail);
+      formDatas.append("alternativeTexts", data.alternativeText);
+      formDatas.append("subCategories", data.subCategory);
+      formDatas.append("styles", data.style);
+    });
+
+    try {
+      /*
+       *check file is valid--
+       * if correct file retune true this function
+       */
+      const isValidFile = bulkIconFileValidation(
+        files,
+        setMessage,
+        message,
+        setIconLoading
+      );
+
+      /*
+       *check input filed is valid--
+       * if correct input filed retune true this function
+       */
+      const isValidInputFiled = bulkIconInputFiledValidation(
+        formData,
+        setIconLoading
+      );
+
+      /*
+       *check input filed is empty--
+       * if does not empty input filed retune true this function
+       */
+      const notEmptyFiled = bulkIconEmptyInputFiledValidation(
+        formData,
+        setSubmitted,
+        setIconLoading
+      );
+
+      /*
+       * isValidInputFiled OR notEmptyFiled is retune true
+       * then execute API Call otherwise not calling backend
+       */
+      if (isValidInputFiled && notEmptyFiled && isValidFile) {
+        const result = await axiosSecure.post(
+          `/${iconRootURL}/bulk-upload`,
+          formDatas,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        if (result?.data?.success) {
+          successAlert(`Bulk Icon  Upload Successfully`);
+          setIconLoading(false);
+          setFormData([]);
+          setFiles([]);
+          Cookies.set("selected-dashboard-tab", 0);
+
+          history.back();
+        }
+      }
+    } catch (error) {
+      setIconLoading(false);
+      errorAlert(error.message);
+    }
+  };
+
+  return (
+    <div className=" min-h-screen max-w-[750px] lg:max-w-7xl pb-10  ">
+      <div className=" w-full mx-auto mt-10">
+        {/* icon title and meta title  */}
+        <input
+          type="file"
+          multiple
+          onChange={(e) => handleFileChange(e, setFiles, user, setFormData)}
+          ref={fileInputRef}
+          style={{ display: "none" }}
+        />
+        <div className=" flex justify-center items-center w-full">
+          {!formData.length && (
+            <div
+              className="w-60 h-48 border rounded-2xl flex justify-center items-center text-5xl text-[#ff0000] mt-20"
+              onClick={handleBoxClick}
+            >
+              <FaUpload />
+            </div>
+          )}
+        </div>
+        {files?.length > 0 && (
+          <p className="text-end text-gray-700 ">
+            Total Selected File {files?.length}
+          </p>
+        )}
+        {formData?.map((data, index) => {
+          return (
+            <div
+              key={index}
+              className={`grid grid-cols-4 w-[1200px] border  p-4 rounded-lg shadow mt-3  ${
+                submitted &&
+                (!formData[index].title ||
+                  !formData[index].metaTitle ||
+                  !formData[index].alternativeText ||
+                  Object.values(formData[index].tags).some(
+                    (tag) => tag == "" || tag.length > 10
+                  ) ||
+                  Object.values(formData[index].tags).some(
+                    (tag) => !tag.match(/^(?!\s)[a-zA-Z\s,:-]+$/g) && tag !== ""
+                  ) ||
+                  !formData[index].metaDescription)
+                  ? "border-red-500 shadow-red-700 shadow-sm border-rounded border-2"
+                  : ""
+              }`}
+            >
+              <div className="border m-2 md:mb-6 flex-1 rounded-lg w-28 flex  justify-center ">
+                <img
+                  src={data.preview}
+                  alt={`Preview ${index}`}
+                  className="p-1 rounded-xl"
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    objectFit: "cover",
+                  }}
+                />
+              </div>
+              {/* Delete Input Filed */}
+              <div></div>
+              <div></div>
+              <div className="  flex justify-end  mt-4 ">
+                <button
+                  className=" w-12 h-12 border rounded-xl bg-red-500 text-white"
+                  onClick={() => deleteFiledHandler(index)}
+                >
+                  <span className=" flex justify-center text-3xl">
+                    <MdDeleteForever />
+                  </span>
+                </button>
+              </div>
+              <div className="relative m-2 md:mb-5 flex-1">
+                {/* Icon Title */}
+                <BulkUploadInputField
+                  title={`title`}
+                  condition={
+                    submitted && !formData[index].title ? "bg-red-100" : ""
+                  }
+                  label={`Icon Title`}
+                  type={"text"}
+                  regex={/^(?!\s)[a-zA-Z\s,:-]+$/g}
+                  handleChangeFn={handleTitleChange}
+                  index={index}
+                  value={data?.title}
+                  minLength={1}
+                />
+
+                {/* error message for Icon Title */}
+              </div>
+              <div className="relative m-2 md:mb-5 flex-1">
+                {/* Icon meta title */}
+
+                <BulkUploadInputField
+                  condition={
+                    submitted && !formData[index].metaTitle ? "bg-red-100" : ""
+                  }
+                  title={`metaTitle`}
+                  label={`Meta Title`}
+                  type={"text"}
+                  regex={/^(?!\s)[a-zA-Z\s,:-]+$/g}
+                  handleChangeFn={handleMetaTitleChange}
+                  index={index}
+                  value={data?.metaTitle}
+                  minLength={5}
+                />
+              </div>
+
+              <div className="relative m-2 md:mb-5 flex-1">
+                {/* Icon Category */}
+                <BulkUploadInputField
+                  title={`category`}
+                  label={`Category`}
+                  defaultValue={"icon"}
+                  type={"text"}
+                  handleChangeFn={handleCategoryChange}
+                  index={index}
+                  readOnly={true}
+                  value={data?.category}
+                  minLength={5}
+                />
+              </div>
+
+              {/* subCategory text */}
+              <div className="relative m-2 md:mb-5 flex-1 g">
+                <select
+                  className={`${categoryClass}  w-full customTextField  ${
+                    submitted && !formData[index].alternativeText
+                      ? "bg-red-100"
+                      : ""
+                  }`}
+                  // defaultValue={}
+                  value={data?.subCategory}
+                  onChange={(e) => handleSubCategoryChange(index, e)}
+                >
+                  <option disabled className="text-zinc-300">
+                    Select Sub-Category
+                  </option>
+                  {iconSubCategories?.map((dynamicCategory, index) => (
+                    <option
+                      key={index}
+                      value={dynamicCategory?.subCategoryLink}
+                      className="py-1"
+                    >
+                      {dynamicCategory.subCategoryName}
+                    </option>
+                  ))}
+                </select>
+                <label className={labelClass}>Select Sub Category</label>
+                <ArrowIconSelect />
+              </div>
+
+              {/* style select option  */}
+              <div className="relative m-2 md:mb-5 flex-1">
+                <select
+                  className={categoryClass}
+                  // defaultValue={}
+                  value={data.style}
+                  onChange={(e) => handleStyleChange(index, e)}
+                >
+                  <option disabled>Select Style</option>
+                  {iconStyle?.map((dynamicCategory, index) => (
+                    <option key={index} value={dynamicCategory?.styleLink}>
+                      {dynamicCategory.styleName}
+                    </option>
+                  ))}
+                </select>
+                <label className={labelClass}>Select Style</label>
+                <ArrowIconSelect />
+              </div>
+
+              <div className="relative m-2 md:mb-5 flex-1">
+                {/* alternative text for image */}
+
+                <BulkUploadInputField
+                  condition={
+                    submitted && !formData[index].alternativeText
+                      ? "bg-red-100"
+                      : ""
+                  }
+                  title={`alternativeText`}
+                  label={`Alternative Text`}
+                  type={"text"}
+                  regex={/^(?!\s)[a-zA-Z\s,:-]+$/g}
+                  handleChangeFn={handleAlternativeTextChange}
+                  index={index}
+                  value={data?.alternativeText}
+                  minLength={5}
+                />
+                {/* error message for alternative text input  */}
+              </div>
+
+              <div className="relative m-2 md:mb-6 flex-1">
+                <div className="border border-slate-300 h-10 w-[96%] mx-auto lg:mx-0 lg:w-full rounded text-slate-500  py-[1px] my-1 lg:my-0 flex flex-wrap gap-1 text-xs">
+                  <BulkIconTagInputFiled
+                    handleTagChange={handleTagChange}
+                    submitted={submitted}
+                    formData={formData}
+                    index={index}
+                    value={data?.alternativeText}
+                  />
+                </div>
+              </div>
+              <div className="relative m-2 md:mb-6 flex-1">
+                <BulkUploadDescriptionInputField
+                  condition={
+                    submitted && !formData[index].metaDescription
+                      ? "bg-red-100"
+                      : ""
+                  }
+                  regex={/^(?!\s)[a-zA-Z\s,:-]+$/g}
+                  maxLength={160}
+                  title={"metaDescription"}
+                  label={"Meta Description"}
+                  handleChangeFn={handleMetaDescriptionChange}
+                  index={index}
+                  value={data?.metaDescription}
+                />
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="md:w-[750px] lg:w-[800px] mx-auto px-4"></div>
+        {formData?.length > 0 && (
+          <div className="flex items-center justify-center mt-10">
+            {iconLoading ? (
+              <UploadLoading />
+            ) : (
+              <button
+                onClick={handleUpload}
+                className="inline-flex items-center justify-center w-32 h-10 bg-[#ff0000] hover:bg-white text-xs md:text-[12px] border-[1px] border-[#ff0000] lg:text-[15px] font-medium tracking-wide text-white hover:text-[#ff0000]  transition duration-300 rounded-lg hover-visible:outline-none whitespace-nowrap  hover:shadow-2xl uppercase hover:cursor-pointer"
+              >
+                Upload
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+AddBulkIconForm.propTypes = {
+  files: PropTypes.any,
+  setFiles: PropTypes.func,
+};
+export default AddBulkIconForm;

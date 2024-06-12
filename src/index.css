@@ -1,0 +1,13 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600;800;900&display=swap");
+/* @font-face {
+    font-family: 'Inter';
+    src: local('Inter'), url(./fonts/InterTight-VariableFont_wght.ttf) format('truetype');
+} */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.interVar {
+  font-family: "Inter", sans-serif;
+}

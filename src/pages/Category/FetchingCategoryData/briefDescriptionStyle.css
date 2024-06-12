@@ -1,0 +1,30 @@
+.blog-post h1 {
+  font-size: 2em;
+  margin-bottom: 1rem;
+}
+
+.blog-post h2 {
+  font-size: 1.5em;
+  margin-bottom: 0.5rem;
+}
+
+.blog-post p {
+  margin-bottom: 1rem;
+}
+
+.blog-post ul li {
+  margin-left: 1rem;
+  list-style-type: disc;
+}
+.blog-post ol li {
+  margin-left: 1rem;
+  list-style-type: decimal;
+}
+
+.blog-post a{
+ color: blue;
+}
+
+.blog-post strong {
+  font-weight: bold;
+}
