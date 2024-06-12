@@ -23,22 +23,11 @@ jobs:
       - name: Build the project
         run: npm run build
 
-      - name: Upload update.sh script
-        uses: actions/upload-artifact@v3
-        with:
-          name: update-script
-          path: update.sh
-
   update_ssh_linode:
     name: Telling Backend Server to Update
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Download update.sh script
-        uses: actions/download-artifact@v3
-        with:
-          name: update-script
-
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         with:
@@ -47,11 +36,8 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
-            # Copy the update script to the server
-            scp update.sh ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/root/update.sh
+            # Navigate to the frontend directory
+            cd /root/frontend
 
             # Run the update script
-            ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "bash /root/update.sh"
-
-            # Clean up the temporary script file
-            ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "rm /root/update.sh"
+            bash update.sh
