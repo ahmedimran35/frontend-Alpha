@@ -38,7 +38,7 @@ jobs:
           nvm use 18
 
           # Navigate to backend folder
-          cd /path/to/your/backend/folder || exit 1
+          cd /root/frontend || exit 1
 
           # Remove old files, but keep .git directory
           sudo find . -mindepth 1 -not -name '.git' -not -name '.gitignore' -delete
