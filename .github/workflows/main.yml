@@ -34,7 +34,7 @@ jobs:
         script: |
           cd /root/backend
           sudo rm -rf * # Delete all existing files
-          git pull https://github.com/ahmedimran35/frontend-Alpha.git
+          git pull origin main
           npm install
           cp /root/.env.local /root/backend
           npm run build
