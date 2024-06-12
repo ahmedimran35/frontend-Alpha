@@ -39,7 +39,7 @@ jobs:
           if [ ! -d "$PROJECT_DIR" ]; then
             mkdir -p "$PROJECT_DIR"
             cd "$PROJECT_DIR"
-            git clone https://github.com/ahmedimran35/frontend-Alpha.git .
+            git clone git@github.com:ahmedimran35/frontend-Alpha.git
           else
             cd "$PROJECT_DIR"
             git pull origin main
