@@ -34,7 +34,8 @@ jobs:
         script: |
           cd /root/backend
           sudo rm -rf * # Delete all existing files
-          git pull origin main
+          git fetch origin
+          git reset --hard origin/main
           npm install
           cp /root/.env.local /root/backend
           npm run build
