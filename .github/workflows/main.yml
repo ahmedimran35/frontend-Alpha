@@ -16,7 +16,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '18' # Specify the Node.js version
+        node-version: '18'
 
     - name: Install dependencies
       run: npm install
@@ -30,40 +30,35 @@ jobs:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
         password: ${{ secrets.VPS_PASSWORD }}
-        port: 22 # Specify the SSH port (default is 22)
+        port: 22
         script: |
-          # Ensure Node.js and npm are available
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-          nvm use 18
+          # Define the project directory on the VPS
+          PROJECT_DIR="/root/frontend"
 
-          # Navigate to backend folder
-          cd /root/frontend || exit 1
-
-          # Remove old files, but keep .git directory
-          sudo find . -mindepth 1 -not -name '.git' -not -name '.gitignore' -delete
-
-          # Initialize a new git repository if not already present
-          if [ ! -d ".git" ]; then
-            git init
-            git remote add origin https://github.com/your-username/your-repo.git
+          # Navigate to the project directory or create it if it doesn't exist
+          if [ ! -d "$PROJECT_DIR" ]; then
+            mkdir -p "$PROJECT_DIR"
+            cd "$PROJECT_DIR"
+            git clone https://github.com/ahmedimran35/frontend-Alpha.git .
+          else
+            cd "$PROJECT_DIR"
+            git pull origin main
           fi
 
-          # Pull the latest changes from the repository
-          git fetch origin
-          git reset --hard origin/main
+          # Ensure the environment is set up correctly
+          if [ ! -f package.json ]; then
+            echo "Error: package.json not found!"
+            exit 1
+          fi
 
           # Install npm dependencies
           npm install
-
-          # Copy the .env file
-          cp /root/.env.local /root/backend
 
           # Build the project
           npm run build
 
           # Copy the built files to /var/www
-          sudo cp -r dist/* /var/www/
+          sudo cp -r build/* /var/www/
 
           # Restart Nginx to apply changes
           sudo systemctl restart nginx
