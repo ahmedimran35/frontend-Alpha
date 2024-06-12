@@ -22,17 +22,16 @@ jobs:
       - name: Build the project
         run: npm run build
 
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
       - name: Deploy to VPS
         env:
           HOST: ${{ secrets.VPS_HOST }}
           USER: ${{ secrets.VPS_USERNAME }}
-          KEY: ${{ secrets.VPS_PRIVATE_KEY }}
+          PASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          mkdir -p ~/.ssh/
-          echo "$KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
-          scp -r build/* $USER@$HOST:/var/www
-          ssh $USER@$HOST "
+          sshpass -p "$PASS" scp -r build/* $USER@$HOST:/var/www
+          sshpass -p "$PASS" ssh $USER@$HOST "
             sudo systemctl restart nginx
           "
