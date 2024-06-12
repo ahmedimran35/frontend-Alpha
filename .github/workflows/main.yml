@@ -24,7 +24,7 @@ jobs:
         run: npm run build
 
   update_ssh_linode:
-    name: Telling Backend Server to Update
+    name: Telling Frontend Server to Update
     needs: deploy
     runs-on: ubuntu-latest
     steps:
