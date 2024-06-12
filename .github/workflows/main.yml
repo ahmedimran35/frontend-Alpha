@@ -37,7 +37,7 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             # Navigate to the frontend directory
-            cd /root/frontend
+            # cd /root/frontend
 
             # Run the update script
             bash update.sh
