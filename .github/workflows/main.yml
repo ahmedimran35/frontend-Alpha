@@ -28,9 +28,6 @@ jobs:
           USER: ${{ secrets.VPS_USERNAME }}
           KEY: ${{ secrets.VPS_PRIVATE_KEY }}
         run: |
-          mkdir -p ~/.ssh/
-          echo "$KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
           scp -r build/* $USER@$HOST:/var/www
           ssh $USER@$HOST "
             sudo systemctl restart nginx
