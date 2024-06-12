@@ -1,29 +1,18 @@
 name: Deploy to VPS
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '18'
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Build project
-      run: npm run build
-
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -34,31 +23,20 @@ jobs:
         script: |
           # Define the project directory on the VPS
           PROJECT_DIR="/root/frontend"
-
           # Navigate to the project directory or create it if it doesn't exist
           if [ ! -d "$PROJECT_DIR" ]; then
             mkdir -p "$PROJECT_DIR"
             cd "$PROJECT_DIR"
-            git clone git@github.com:ahmedimran35/frontend-Alpha.git .
+            git clone https://github.com/ahmedimran35/frontend-Alpha.git .
           else
             cd "$PROJECT_DIR"
             git pull origin main
           fi
-
-          # Ensure the environment is set up correctly
-          if [ ! -f package.json ]; then
-            echo "Error: package.json not found!"
-            exit 1
-          fi
-
           # Install npm dependencies
           npm install
-
           # Build the project
           npm run build
-
           # Copy the built files to /var/www
           sudo cp -r build/* /var/www/
-
           # Restart Nginx to apply changes
           sudo systemctl restart nginx
