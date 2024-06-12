@@ -3,40 +3,35 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '18'
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        password: ${{ secrets.VPS_PASSWORD }}
-        port: 22
-        script: |
-          # Define the project directory on the VPS
-          PROJECT_DIR="/root/frontend"
-          # Navigate to the project directory or create it if it doesn't exist
-          if [ ! -d "$PROJECT_DIR" ]; then
-            mkdir -p "$PROJECT_DIR"
-            cd "$PROJECT_DIR"
-            git clone git@github.com:ahmedimran35/frontend-Alpha.git
-          else
-            cd "$PROJECT_DIR"
-            git pull origin main
-          fi
-          # Install npm dependencies
-          npm install
-          # Build the project
-          npm run build
-          # Copy the built files to /var/www
-          sudo cp -r build/* /var/www/
-          # Restart Nginx to apply changes
-          sudo systemctl restart nginx
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the project
+        run: npm run build
+
+      - name: Deploy to VPS
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USERNAME }}
+          KEY: ${{ secrets.VPS_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          scp -r build/* $USER@$HOST:/var/www
+          ssh $USER@$HOST "
+            sudo systemctl restart nginx
+          "
