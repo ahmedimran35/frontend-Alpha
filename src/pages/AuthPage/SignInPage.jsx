@@ -30,7 +30,9 @@ const SignInPage = () => {
       <div className="p-2 md:p-0 mt-48 flex justify-center items-center">
         <div className=" p-5 w-[450px] h-96 mx-aut border rounded-md shadow-sm flex justify-center items-center">
           <div>
-            <p className=" base text-center">Welcome to YT Shops</p>
+            <p className=" base text-center">
+              Welcome to YT Shopssssssssssssssssssssssssss
+            </p>
             <h3 className=" text-3xl font-semibold text-center mt-2">
               Your Journey Starts Here!
             </h3>
